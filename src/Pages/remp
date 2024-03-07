@@ -1,0 +1,44 @@
+ const HandleAdd = async (item) => {
+        if (isLoggedIn) {
+            const user = auth.currentUser;
+            const cartRef = collection(db, 'carts', user.uid, 'items');
+            const productRef = collection(db, 'carts', user.uid, 'items')
+            let productList = await getDocs(productRef);
+            
+            const existingItem = cart.find(cartItem => cartItem.id === item.id);
+            if (existingItem) {
+                let Uid = productList.docs.map((item) => {
+                    console.log(item.id)
+                    return item.id
+                  })
+                console.log(...Uid)
+                const updatedCart = cart.map(cartItem =>
+                    cartItem.id === item.id ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem
+                );
+                setCart(updatedCart);
+                const itemRef = doc(cartRef, ...Uid); 
+                const newQuantity = existingItem.quantity + 1;
+                setDoc(itemRef, { ...existingItem, quantity: newQuantity }, { merge: true })
+                    .then(() => {
+                        swal("Quantity updated in cart!", "You clicked the button!", "success");
+                    })
+                    .catch((error) => {
+                        console.error("Error updating quantity in cart: ", error);
+                        swal("Error updating quantity in cart!", "You clicked the button!", "error");
+                    });
+            } else {
+                addDoc(cartRef, { ...item, quantity: 1 })
+                    .then(() => {
+                        swal("Item added to cart!", "You clicked the button!", "success");
+                        setCart([...cart, { ...item, quantity: 1 }]); 
+                    })
+                    .catch((error) => {
+                        console.error("Error adding item to cart: ", error);
+                        swal("Error adding item to cart!", "You clicked the button!", "error");
+                    });
+            }
+        } else {
+            swal("Login First!", "You clicked the button!", "error");
+            nevigate('/login');
+        }
+    };
